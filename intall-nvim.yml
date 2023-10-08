@@ -1,5 +1,5 @@
 ---
-- hosts: 127.0.0.1
+- hosts: "{{ host | default('127.0.0.1') }}"
   connection: local
   vars_prompt:
     - name: nvim_tag
@@ -119,13 +119,8 @@
             dest: "{{ nvim_config }}/lua"
 
         - name: Sync LazyVim
-          command: nvim -c "lua require('lazy').sync({wait = true})" +q
-          timeout: 600
-          ignore_errors: true
-
-        - name: Check health of LazyVim
-          command: nvim --headless +checkhealth +q
-          timeout: 120
+          command: nvim --headless +"lua require('lazy').sync({wait = true})" +qa
+          timeout: 300
           ignore_errors: true
 
         - name: enable yml lsp
@@ -188,7 +183,7 @@
           when: '"all" in features or "copilot" in features'
 
         - name: Sync LazyVim
-          command: nvim -c "lua require('lazy').sync({wait = true})" +q
+          command: nvim --headless +"lua require('lazy').sync({wait = true})" +qa
           timeout: 600
           ignore_errors: true
           when: 'not ("none" in features)'
