@@ -20,13 +20,26 @@
     nvim_config: "{{ ansible_env.HOME }}/.config/nvim"
 
   tasks:
-    - name: Install Neovim
+    - name: install npm
+      package:
+        name: npm
+        state: present
+      become: true
+
+    - name: install python
+      package:
+        name: python3
+        state: present
+      become: true
+
+    - name: Install Neovim on linux64
       block:
         - name: backup Neovim install
           copy:
             src: "{{ neovim_extract_path }}"
             dest: "{{ neovim_extract_path }}.bak"
             remote_src: yes
+          ignore_errors: true
 
         - name: Download Neovim tarball
           get_url:
@@ -62,6 +75,7 @@
 
         - name: Restore Neovim backup
           command: "mv {{ neovim_extract_path }}.bak {{ neovim_extract_path }}"
+      when: ansible_architecture == "x86_64"
 
     - name: try to install lazyvim
       block:
@@ -78,6 +92,7 @@
             - "~/.local/share/nvim.bak"
             - "~/.local/state/nvim.bak"
             #- "~/.cache/nvim.bak"
+          ignore_errors: true
 
         - name: make a new backup of current Neovim files
           command: "mv {{ item }} {{ item }}.bak"
@@ -86,6 +101,7 @@
             - "~/.local/share/nvim"
             - "~/.local/state/nvim"
             #- "~/.cache/nvim"
+          ignore_errors: true
 
         - name: clone the LazyVim starter
           git:
