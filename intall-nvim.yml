@@ -204,6 +204,8 @@
             - "vim"
             - "vimdoc"
             - "yaml"
+            - "rust"
+            - "dockerfile"
 
       rescue:
         - name: delete dirty folders
