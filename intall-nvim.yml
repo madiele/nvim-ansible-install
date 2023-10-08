@@ -112,6 +112,11 @@
         insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
       when: '"all" in features or "docker" in features'
 
+    - name: install overrides
+      copy:
+        src: ./overides/
+        dest: "{{ nvim_config }}/lua"
+
     - name: Check health of Neovim
       command: nvim --headless +checkhealth +q
       timeout: 120
