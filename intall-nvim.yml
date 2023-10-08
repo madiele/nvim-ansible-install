@@ -20,11 +20,13 @@
     nvim_config: "{{ ansible_env.HOME }}/.config/nvim"
 
   tasks:
-    - name: try to install nvim
+    - name: Install Neovim
       block:
-        - name: parse features
-          set_fact:
-            features: '{{ requested_features.split(",") }}'
+        - name: backup Neovim install
+          copy:
+            src: "{{ neovim_extract_path }}"
+            dest: "{{ neovim_extract_path }}.bak"
+            remote_src: yes
 
         - name: Download Neovim tarball
           get_url:
@@ -51,6 +53,21 @@
 
         - debug:
             msg: you might need to ```source /home/madiele/.bashrc```
+
+      rescue:
+        - name: Delete Neovim install files
+          file:
+            path: "{{ neovim_extract_path }}"
+            state: absent
+
+        - name: Restore Neovim backup
+          command: "mv {{ neovim_extract_path }}.bak {{ neovim_extract_path }}"
+
+    - name: try to install lazyvim
+      block:
+        - name: parse features
+          set_fact:
+            features: '{{ requested_features.split(",") }}'
 
         - name: delete the old LazyVim backup
           file:
@@ -119,9 +136,6 @@
           copy:
             src: ./overides/
             dest: "{{ nvim_config }}/lua"
-
-        - name: simulate error
-          command: 'exit 1'
 
         - name: Check health of Neovim
           command: nvim --headless +checkhealth +q
