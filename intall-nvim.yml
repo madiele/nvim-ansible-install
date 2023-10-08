@@ -137,7 +137,12 @@
             src: ./overides/
             dest: "{{ nvim_config }}/lua"
 
-        - name: Check health of Neovim
+        - name: Sync LazyVim
+          command: nvim -c "lua require('lazy').sync({wait = true})" +q
+          timeout: 600
+          ignore_errors: true
+
+        - name: Check health of LazyVim
           command: nvim --headless +checkhealth +q
           timeout: 120
           ignore_errors: true
