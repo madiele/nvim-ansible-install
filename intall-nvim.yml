@@ -20,105 +20,129 @@
     nvim_config: "{{ ansible_env.HOME }}/.config/nvim"
 
   tasks:
-    - name: parse features
-      set_fact:
-        features: '{{ requested_features.split(",") }}'
+    - name: try to install nvim
+      block:
+        - name: parse features
+          set_fact:
+            features: '{{ requested_features.split(",") }}'
 
-    - name: Download Neovim tarball
-      get_url:
-        url: "{{ neovim_url }}"
-        dest: "{{ neovim_tarball }}"
-        mode: "0644"
+        - name: Download Neovim tarball
+          get_url:
+            url: "{{ neovim_url }}"
+            dest: "{{ neovim_tarball }}"
+            mode: "0644"
 
-    - name: Extract Neovim tarball
-      unarchive:
-        src: "{{ neovim_tarball }}"
-        dest: "{{ ansible_env.HOME }}"
-        remote_src: yes
+        - name: Extract Neovim tarball
+          unarchive:
+            src: "{{ neovim_tarball }}"
+            dest: "{{ ansible_env.HOME }}"
+            remote_src: yes
 
-    - name: Delete Neovim tarball
-      file:
-        path: "{{ neovim_tarball }}"
-        state: absent
+        - name: Delete Neovim tarball
+          file:
+            path: "{{ neovim_tarball }}"
+            state: absent
 
-    - name: Add Neovim to PATH
-      lineinfile:
-        path: "{{ ansible_env.HOME }}/.bashrc"
-        line: 'export PATH="{{ neovim_bin }}:$PATH"'
-        create: yes
+        - name: Add Neovim to PATH
+          lineinfile:
+            path: "{{ ansible_env.HOME }}/.bashrc"
+            line: 'export PATH="{{ neovim_bin }}:$PATH"'
+            create: yes
 
-    - debug:
-        msg: you might need to ```source /home/madiele/.bashrc```
+        - debug:
+            msg: you might need to ```source /home/madiele/.bashrc```
 
-    - name: delete the old LazyVim backup
-      file:
-        path: "{{ item }}"
-        state: absent
-      with_items:
-        - "~/.config/nvim.bak"
-        - "~/.local/share/nvim.bak"
-        - "~/.local/state/nvim.bak"
-        #- "~/.cache/nvim.bak"
+        - name: delete the old LazyVim backup
+          file:
+            path: "{{ item }}"
+            state: absent
+          with_items:
+            - "~/.config/nvim.bak"
+            - "~/.local/share/nvim.bak"
+            - "~/.local/state/nvim.bak"
+            #- "~/.cache/nvim.bak"
 
-    - name: make a new backup of current Neovim files
-      command: "mv {{ item }} {{ item }}.bak"
-      with_items:
-        - "~/.config/nvim"
-        - "~/.local/share/nvim"
-        - "~/.local/state/nvim"
-        #- "~/.cache/nvim"
+        - name: make a new backup of current Neovim files
+          command: "mv {{ item }} {{ item }}.bak"
+          with_items:
+            - "~/.config/nvim"
+            - "~/.local/share/nvim"
+            - "~/.local/state/nvim"
+            #- "~/.cache/nvim"
 
-    - name: clone the LazyVim starter
-      git:
-        repo: "https://github.com/LazyVim/starter"
-        dest: "~/.config/nvim"
+        - name: clone the LazyVim starter
+          git:
+            repo: "https://github.com/LazyVim/starter"
+            dest: "~/.config/nvim"
 
-    - name: remove the .git folder
-      file:
-        path: "~/.config/nvim/.git"
-        state: absent
+        - name: remove the .git folder
+          file:
+            path: "~/.config/nvim/.git"
+            state: absent
 
-    - name: enalbe yml lsp
-      lineinfile:
-        path: "{{ nvim_config }}/lua/config/lazy.lua"
-        line: '{ import = "lazyvim.plugins.extras.lang.yaml" },'
-        insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
-      when: '"all" in features or "yml" in features'
+        - name: enalbe yml lsp
+          lineinfile:
+            path: "{{ nvim_config }}/lua/config/lazy.lua"
+            line: '{ import = "lazyvim.plugins.extras.lang.yaml" },'
+            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+          when: '"all" in features or "yml" in features'
 
-    - name: enalbe rust lsp
-      lineinfile:
-        path: "{{ nvim_config }}/lua/config/lazy.lua"
-        line: '{ import = "lazyvim.plugins.extras.lang.rust" },'
-        insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
-      when: '"all" in features or "rust" in features'
+        - name: enalbe rust lsp
+          lineinfile:
+            path: "{{ nvim_config }}/lua/config/lazy.lua"
+            line: '{ import = "lazyvim.plugins.extras.lang.rust" },'
+            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+          when: '"all" in features or "rust" in features'
 
-    - name: enalbe python lsp
-      lineinfile:
-        path: "{{ nvim_config }}/lua/config/lazy.lua"
-        line: '{ import = "lazyvim.plugins.extras.lang.python" },'
-        insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
-      when: '"all" in features or "python" in features'
+        - name: enalbe python lsp
+          lineinfile:
+            path: "{{ nvim_config }}/lua/config/lazy.lua"
+            line: '{ import = "lazyvim.plugins.extras.lang.python" },'
+            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+          when: '"all" in features or "python" in features'
 
-    - name: enalbe copilot
-      lineinfile:
-        path: "{{ nvim_config }}/lua/config/lazy.lua"
-        line: '{ import = "lazyvim.plugins.extras.coding.copilot" },'
-        insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
-      when: '"all" in features or "copilot" in features'
+        - name: enalbe copilot
+          lineinfile:
+            path: "{{ nvim_config }}/lua/config/lazy.lua"
+            line: '{ import = "lazyvim.plugins.extras.coding.copilot" },'
+            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+          when: '"all" in features or "copilot" in features'
 
-    - name: enalbe docker lsp
-      lineinfile:
-        path: "{{ nvim_config }}/lua/config/lazy.lua"
-        line: '{ import = "lazyvim.plugins.extras.lang.docker" },'
-        insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
-      when: '"all" in features or "docker" in features'
+        - name: enalbe docker lsp
+          lineinfile:
+            path: "{{ nvim_config }}/lua/config/lazy.lua"
+            line: '{ import = "lazyvim.plugins.extras.lang.docker" },'
+            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+          when: '"all" in features or "docker" in features'
 
-    - name: install overrides
-      copy:
-        src: ./overides/
-        dest: "{{ nvim_config }}/lua"
+        - name: install overrides
+          copy:
+            src: ./overides/
+            dest: "{{ nvim_config }}/lua"
 
-    - name: Check health of Neovim
-      command: nvim --headless +checkhealth +q
-      timeout: 120
-      ignore_errors: true
+        - name: simulate error
+          command: 'exit 1'
+
+        - name: Check health of Neovim
+          command: nvim --headless +checkhealth +q
+          timeout: 120
+          ignore_errors: true
+
+      rescue:
+        - name: delete dirty folders
+          file:
+            path: "{{ item }}"
+            state: absent
+          with_items:
+            - "~/.config/nvim"
+            - "~/.local/share/nvim"
+            - "~/.local/state/nvim"
+            #- "~/.cache/nvim.bak"
+
+        - name: restoring backup
+          command: "mv {{ item }}.bak {{ item }}"
+          with_items:
+            - "~/.config/nvim"
+            - "~/.local/share/nvim"
+            - "~/.local/state/nvim"
+            #- "~/.cache/nvim"

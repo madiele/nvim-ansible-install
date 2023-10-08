@@ -12,6 +12,7 @@ return {
 			keys[#keys + 1] = { "gR", vim.lsp.buf.rename, desc = "Rename Symbol" }
 			keys[#keys + 1] = { "gk", vim.lsp.buf.signature_help, desc = "Signature Help" }
 			keys[#keys + 1] = { "ga", vim.lsp.buf.code_action, desc = "Code Action" }
+			keys[#keys + 1] = { "<leader>lk", vim.lsp.buf.hover, desc = "Hover Symbol" }
 		end,
 	},
 }
