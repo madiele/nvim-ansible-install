@@ -20,7 +20,8 @@
     nvim_config: "{{ ansible_env.HOME }}/.config/nvim"
 
   tasks:
-    - set_fact:
+    - name: parse features
+      set_fact:
         features: '{{ requested_features.split(",") }}'
 
     - name: Download Neovim tarball
