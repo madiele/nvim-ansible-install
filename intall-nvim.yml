@@ -1,0 +1,70 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  vars_prompt:
+    name: nvim_tag
+    prompt: (latest|nightly)
+    default: latest
+  vars:
+    neovim_url: "{% if nvim_tag == 'latest' %}https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz{% else %}https://github.com/neovim/neovim/releases/download/{{ nvim_tag }}/nvim-linux64.tar.gz{% endif %}"
+    neovim_tarball: "{{ ansible_env.HOME }}/nvim-linux64.tar.gz"
+    neovim_extract_path: "{{ ansible_env.HOME }}/nvim-linux64"
+    neovim_bin: "{{ neovim_extract_path }}/bin"
+
+  tasks:
+    - name: Download Neovim tarball
+      get_url:
+        url: "{{ neovim_url }}"
+        dest: "{{ neovim_tarball }}"
+        mode: '0644'
+
+    - name: Extract Neovim tarball
+      unarchive:
+        src: "{{ neovim_tarball }}"
+        dest: "{{ ansible_env.HOME }}"
+        remote_src: yes
+
+    - name: Delete Neovim tarball
+      file:
+        path: "{{ neovim_tarball }}"
+        state: absent
+
+    - name: Add Neovim to PATH
+      lineinfile:
+        path: "{{ ansible_env.HOME }}/.bashrc"
+        line: 'export PATH="{{ neovim_bin }}:$PATH"'
+        create: yes
+
+    - debug:
+        msg: you might need to ```source /home/madiele/.bashrc```
+
+    - name: delete the old LazyVim backup
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - "~/.config/nvim.bak"
+        - "~/.local/share/nvim.bak"
+        - "~/.local/state/nvim.bak"
+        - "~/.cache/nvim.bak"
+
+    - name: make a new backup of current Neovim files
+      command: "mv {{ item }} {{ item }}.bak"
+      with_items:
+        - "~/.config/nvim"
+        - "~/.local/share/nvim"
+        - "~/.local/state/nvim"
+        - "~/.cache/nvim"
+
+    - name: clone the LazyVim starter
+      git:
+        repo: 'https://github.com/LazyVim/starter'
+        dest: '~/.config/nvim'
+
+    - name: remove the .git folder
+      file:
+        path: '~/.config/nvim/.git'
+        state: absent
+
+    - name: Check health of Neovim
+      command: nvim --headless +checkhealth +q
