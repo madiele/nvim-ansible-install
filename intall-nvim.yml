@@ -8,7 +8,7 @@
       private: false
 
     - name: requested_features
-      prompt: what features do you want to enable, comma separated list?(all|yml|rust|copilot|python|docker)
+      prompt: what features do you want to enable, comma separated list?(all|none|yml|rust|copilot|python|docker)
       default: "all"
       private: false
 
@@ -97,41 +97,6 @@
             path: "~/.config/nvim/.git"
             state: absent
 
-        - name: enalbe yml lsp
-          lineinfile:
-            path: "{{ nvim_config }}/lua/config/lazy.lua"
-            line: '{ import = "lazyvim.plugins.extras.lang.yaml" },'
-            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
-          when: '"all" in features or "yml" in features'
-
-        - name: enalbe rust lsp
-          lineinfile:
-            path: "{{ nvim_config }}/lua/config/lazy.lua"
-            line: '{ import = "lazyvim.plugins.extras.lang.rust" },'
-            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
-          when: '"all" in features or "rust" in features'
-
-        - name: enalbe python lsp
-          lineinfile:
-            path: "{{ nvim_config }}/lua/config/lazy.lua"
-            line: '{ import = "lazyvim.plugins.extras.lang.python" },'
-            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
-          when: '"all" in features or "python" in features'
-
-        - name: enalbe copilot
-          lineinfile:
-            path: "{{ nvim_config }}/lua/config/lazy.lua"
-            line: '{ import = "lazyvim.plugins.extras.coding.copilot" },'
-            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
-          when: '"all" in features or "copilot" in features'
-
-        - name: enalbe docker lsp
-          lineinfile:
-            path: "{{ nvim_config }}/lua/config/lazy.lua"
-            line: '{ import = "lazyvim.plugins.extras.lang.docker" },'
-            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
-          when: '"all" in features or "docker" in features'
-
         - name: install overrides
           copy:
             src: ./overides/
@@ -146,6 +111,99 @@
           command: nvim --headless +checkhealth +q
           timeout: 120
           ignore_errors: true
+
+        - name: enable yml lsp
+          lineinfile:
+            path: "{{ nvim_config }}/lua/config/lazy.lua"
+            line: '{ import = "lazyvim.plugins.extras.lang.yaml" },'
+            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+          when: '"all" in features or "yml" in features'
+
+        - name: install yml lsp
+          command: 'nvim --headless +"Lazy! load mason.nvim" +"MasonInstall yaml-language-server" +q'
+          when: '"all" in features or "yml" in features'
+          timeout: 120
+          ignore_errors: true
+
+        - name: enable rust lsp
+          lineinfile:
+            path: "{{ nvim_config }}/lua/config/lazy.lua"
+            line: '{ import = "lazyvim.plugins.extras.lang.rust" },'
+            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+          when: '"all" in features or "rust" in features'
+
+        - name: install rust lsp
+          command: 'nvim --headless +"Lazy! load mason.nvim" +"MasonInstall rust-analyzer" +q'
+          when: '"all" in features or "rust" in features'
+          timeout: 120
+          ignore_errors: true
+
+        - name: enable python lsp
+          lineinfile:
+            path: "{{ nvim_config }}/lua/config/lazy.lua"
+            line: '{ import = "lazyvim.plugins.extras.lang.python" },'
+            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+          when: '"all" in features or "python" in features'
+
+        - name: install python lsp
+          command: 'nvim --headless +"Lazy! load mason.nvim" +"MasonInstall pyright" +q'
+          when: '"all" in features or "python" in features'
+          timeout: 120
+          ignore_errors: true
+
+        - name: enable docker lsp
+          lineinfile:
+            path: "{{ nvim_config }}/lua/config/lazy.lua"
+            line: '{ import = "lazyvim.plugins.extras.lang.docker" },'
+            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+          when: '"all" in features or "docker" in features'
+
+        - name: install docker lsp
+          command: 'nvim --headless +"Lazy! load mason.nvim" +"MasonInstall docker-compose-language-service" +q'
+          when: '"all" in features or "docker" in features'
+          timeout: 120
+          ignore_errors: true
+
+        - name: enable copilot
+          lineinfile:
+            path: "{{ nvim_config }}/lua/config/lazy.lua"
+            line: '{ import = "lazyvim.plugins.extras.coding.copilot" },'
+            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+          when: '"all" in features or "copilot" in features'
+
+        - name: Sync LazyVim
+          command: nvim -c "lua require('lazy').sync({wait = true})" +q
+          timeout: 600
+          ignore_errors: true
+          when: 'not ("none" in features)'
+
+        - name: compile treesitter
+          command: 'nvim --headless +"Lazy! load nvim-treesitter" +"TSInstallSync {{ item }}" +q'
+          timeout: 600
+          ignore_errors: true
+          with_items:
+            - "bash"
+            - "c"
+            - "diff"
+            - "html"
+            - "javascript"
+            - "jsdoc"
+            - "json"
+            - "jsonc"
+            - "lua"
+            - "luadoc"
+            - "luap"
+            - "markdown"
+            - "markdown_inline"
+            - "python"
+            - "query"
+            - "regex"
+            - "toml"
+            - "tsx"
+            - "typescript"
+            - "vim"
+            - "vimdoc"
+            - "yaml"
 
       rescue:
         - name: delete dirty folders
