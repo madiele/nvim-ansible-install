@@ -2,21 +2,32 @@
 - hosts: 127.0.0.1
   connection: local
   vars_prompt:
-    name: nvim_tag
-    prompt: (latest|nightly)
-    default: latest
+    - name: nvim_tag
+      prompt: (latest|nightly)
+      default: latest
+      private: false
+
+    - name: requested_features
+      prompt: what features do you want to enable, comma separated list?(all|yml|rust|csharp|chatgpt)
+      default: "all"
+      private: false
+
   vars:
     neovim_url: "{% if nvim_tag == 'latest' %}https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz{% else %}https://github.com/neovim/neovim/releases/download/{{ nvim_tag }}/nvim-linux64.tar.gz{% endif %}"
     neovim_tarball: "{{ ansible_env.HOME }}/nvim-linux64.tar.gz"
     neovim_extract_path: "{{ ansible_env.HOME }}/nvim-linux64"
     neovim_bin: "{{ neovim_extract_path }}/bin"
+    nvim_config: "{{ ansible_env.HOME }}/.config/nvim"
 
   tasks:
+    - set_fact:
+        features: '{{ requested_features.split(",") }}'
+
     - name: Download Neovim tarball
       get_url:
         url: "{{ neovim_url }}"
         dest: "{{ neovim_tarball }}"
-        mode: '0644'
+        mode: "0644"
 
     - name: Extract Neovim tarball
       unarchive:
@@ -58,13 +69,20 @@
 
     - name: clone the LazyVim starter
       git:
-        repo: 'https://github.com/LazyVim/starter'
-        dest: '~/.config/nvim'
+        repo: "https://github.com/LazyVim/starter"
+        dest: "~/.config/nvim"
 
     - name: remove the .git folder
       file:
-        path: '~/.config/nvim/.git'
+        path: "~/.config/nvim/.git"
         state: absent
+
+    - name: enalbe yml lsp
+      lineinfile:
+        path: "{{ nvim_config }}/lua/config/lazy.lua"
+        line: '{ import = "lazyvim.plugins.extras.lang.yaml" },'
+        insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+      when: '"all" in features or "yml" in features'
 
     - name: Check health of Neovim
       command: nvim --headless +checkhealth +q
