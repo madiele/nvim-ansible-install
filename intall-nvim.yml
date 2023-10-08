@@ -8,7 +8,7 @@
       private: false
 
     - name: requested_features
-      prompt: what features do you want to enable, comma separated list?(all|yml|rust|csharp|chatgpt)
+      prompt: what features do you want to enable, comma separated list?(all|yml|rust|copilot|python|docker)
       default: "all"
       private: false
 
@@ -57,7 +57,7 @@
         - "~/.config/nvim.bak"
         - "~/.local/share/nvim.bak"
         - "~/.local/state/nvim.bak"
-        - "~/.cache/nvim.bak"
+        #- "~/.cache/nvim.bak"
 
     - name: make a new backup of current Neovim files
       command: "mv {{ item }} {{ item }}.bak"
@@ -65,7 +65,7 @@
         - "~/.config/nvim"
         - "~/.local/share/nvim"
         - "~/.local/state/nvim"
-        - "~/.cache/nvim"
+        #- "~/.cache/nvim"
 
     - name: clone the LazyVim starter
       git:
@@ -84,5 +84,35 @@
         insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
       when: '"all" in features or "yml" in features'
 
+    - name: enalbe rust lsp
+      lineinfile:
+        path: "{{ nvim_config }}/lua/config/lazy.lua"
+        line: '{ import = "lazyvim.plugins.extras.lang.rust" },'
+        insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+      when: '"all" in features or "rust" in features'
+
+    - name: enalbe python lsp
+      lineinfile:
+        path: "{{ nvim_config }}/lua/config/lazy.lua"
+        line: '{ import = "lazyvim.plugins.extras.lang.python" },'
+        insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+      when: '"all" in features or "python" in features'
+
+    - name: enalbe copilot
+      lineinfile:
+        path: "{{ nvim_config }}/lua/config/lazy.lua"
+        line: '{ import = "lazyvim.plugins.extras.coding.copilot" },'
+        insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+      when: '"all" in features or "copilot" in features'
+
+    - name: enalbe docker lsp
+      lineinfile:
+        path: "{{ nvim_config }}/lua/config/lazy.lua"
+        line: '{ import = "lazyvim.plugins.extras.lang.docker" },'
+        insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+      when: '"all" in features or "docker" in features'
+
     - name: Check health of Neovim
       command: nvim --headless +checkhealth +q
+      timeout: 120
+      ignore_errors: true
