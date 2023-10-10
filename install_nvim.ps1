@@ -6,7 +6,9 @@ if ($isAdmin) {
 else {
   & write-host "skipping dependecies check, please run as admin to check"
 }
-& scoop install mingw -y
+& scoop install mingw make -y
+& refreshenv
+$makeExe = "$(scoop prefix name)/bin/make.exe"
 # Prompt for variables
 $requested_features = Read-Host "Enter features to enable, comma separated list?(all|none|csharp|yml|rust|copilot|python|docker), default is 'all'"
 if(!$requested_features){ $requested_features = 'all' }
@@ -99,3 +101,7 @@ foreach($language in $ts_languages){
     & write-host ""
     & nvim --headless +"Lazy! load nvim-treesitter" +"TSInstallSync! $language" +q
 }
+
+#compile fzf for tree-sitter as a workaroud
+& cd %AppData%\..\Local\nvim-data\lazy\telescope-fzf-native.nvim
+& $makeExe
