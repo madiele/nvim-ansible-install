@@ -1,11 +1,12 @@
 $isAdmin = [bool]([System.Security.Principal.WindowsIdentity]::GetCurrent().Groups -match "S-1-5-32-544")
 if ($isAdmin) {
   & write-host "installing dependecies"
-  & choco install llvm mingw -y
+  & choco install unzip wget lazygit fd llvm mingw ripgrep -y
 } 
 else {
   & write-host "skipping dependecies check, please run as admin to check"
 }
+& scoop install mingw -y
 # Prompt for variables
 $requested_features = Read-Host "Enter features to enable, comma separated list?(all|none|csharp|yml|rust|copilot|python|docker), default is 'all'"
 if(!$requested_features){ $requested_features = 'all' }
