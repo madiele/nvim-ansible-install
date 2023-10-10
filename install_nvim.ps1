@@ -1,9 +1,16 @@
+$isAdmin = [bool]([System.Security.Principal.WindowsIdentity]::GetCurrent().Groups -match "S-1-5-32-544")
+if ($isAdmin) {
+  & write-host "installing dependecies"
+  & choco install llvm mingw -y
+} 
+else {
+  & write-host "skipping dependecies check, please run as admin to check"
+}
 # Prompt for variables
 $requested_features = Read-Host "Enter features to enable, comma separated list?(all|none|csharp|yml|rust|copilot|python|docker), default is 'all'"
 if(!$requested_features){ $requested_features = 'all' }
 
 $features = $requested_features.Split(',')
-
 # Define paths
 $nvim_config = "$env:APPDATA\..\Local\nvim"
 $nvim_data = "$env:APPDATA\..\Local\nvim-data"
