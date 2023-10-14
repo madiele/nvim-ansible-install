@@ -115,7 +115,7 @@
 
         - name: install overrides
           copy:
-            src: ./overides/
+            src: ./lua/
             dest: "{{ nvim_config }}/lua"
 
         - name: Sync LazyVim

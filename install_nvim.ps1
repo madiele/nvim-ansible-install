@@ -39,7 +39,7 @@ git clone https://github.com/LazyVim/starter $nvim_config
 Remove-Item -Path "$nvim_config\.git" -Recurse -Force
 
 # Copy overrides
-Copy-Item -Path ".\overides\" -Destination "$nvim_config\lua" -Recurse -Force
+Copy-Item -Path ".\lua\" -Destination "$nvim_config" -Recurse -Force
 
 # Sync LazyVim
 & nvim --headless +"lua require('lazy').sync({wait = true})" +qa
