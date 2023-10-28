@@ -123,12 +123,19 @@
             recurse: yes
           register: source_files
 
-        - name: Clone files with hardlinks
+        - name: install overrides on remote host
+          copy:
+            src: ./lua/
+            dest: "{{ nvim_config }}/lua"
+          when: inventory_hostname != 'localhost' and inventory_hostname != '127.0.0.1'
+
+        - name: install overrides with hardlinks on local host
           file:
             src: "{{ item.path | realpath }}"
-            dest: '{{ nvim_config }}/{{ item.path }}'
+            dest: "{{ nvim_config }}/{{ item.path }}"
             state: hard
           loop: "{{ source_files.files }}"
+          when: inventory_hostname == 'localhost' or inventory_hostname == '127.0.0.1'
 
         - name: Sync LazyVim
           command: nvim --headless +"lua require('lazy').sync({wait = true})" +qa
