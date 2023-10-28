@@ -1,4 +1,5 @@
 ---
+# run to use: ansible-playbook intall-nvim.yml --extra-vars "your.host.url.com"
 - hosts: "{{ host | default('127.0.0.1') }}"
   connection: local
   vars_prompt:
@@ -25,12 +26,14 @@
         name: npm
         state: present
       become: true
+      ignore_errors: true
 
     - name: install python
       package:
         name: python3
         state: present
       become: true
+      ignore_errors: true
 
     - name: Install Neovim on linux64
       block:
@@ -124,10 +127,10 @@
           ignore_errors: true
 
         - name: enable yml lsp
-          lineinfile:
-            path: "{{ nvim_config }}/lua/config/lazy.lua"
-            line: '{ import = "lazyvim.plugins.extras.lang.yaml" },'
-            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+          include_role:
+            name: add_extra
+          vars:
+            extra_to_install: "lazyvim.plugins.extras.lang.yaml"
           when: '"all" in features or "yml" in features'
 
         - name: install yml lsp
@@ -137,10 +140,10 @@
           ignore_errors: true
 
         - name: enable rust lsp
-          lineinfile:
-            path: "{{ nvim_config }}/lua/config/lazy.lua"
-            line: '{ import = "lazyvim.plugins.extras.lang.rust" },'
-            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+          include_role:
+            name: add_extra
+          vars:
+            extra_to_install: "lazyvim.plugins.extras.lang.rust"
           when: '"all" in features or "rust" in features'
 
         - name: install rust lsp
@@ -150,10 +153,10 @@
           ignore_errors: true
 
         - name: enable python lsp
-          lineinfile:
-            path: "{{ nvim_config }}/lua/config/lazy.lua"
-            line: '{ import = "lazyvim.plugins.extras.lang.python" },'
-            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+          include_role:
+            name: add_extra
+          vars:
+            extra_to_install: "lazyvim.plugins.extras.lang.python"
           when: '"all" in features or "python" in features'
 
         - name: install python lsp
@@ -163,10 +166,10 @@
           ignore_errors: true
 
         - name: enable docker lsp
-          lineinfile:
-            path: "{{ nvim_config }}/lua/config/lazy.lua"
-            line: '{ import = "lazyvim.plugins.extras.lang.docker" },'
-            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+          include_role:
+            name: add_extra
+          vars:
+            extra_to_install: "lazyvim.plugins.extras.lang.docker"
           when: '"all" in features or "docker" in features'
 
         - name: install docker lsp
@@ -176,10 +179,10 @@
           ignore_errors: true
 
         - name: enable copilot
-          lineinfile:
-            path: "{{ nvim_config }}/lua/config/lazy.lua"
-            line: '{ import = "lazyvim.plugins.extras.coding.copilot" },'
-            insertafter: '{ "LazyVim/LazyVim", import = "lazyvim.plugins" },'
+          include_role:
+            name: add_extra
+          vars:
+            extra_to_install: "lazyvim.plugins.extras.coding.copilot"
           when: '"all" in features or "copilot" in features'
 
         - name: Sync LazyVim

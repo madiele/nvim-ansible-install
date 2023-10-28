@@ -1,0 +1,38 @@
+- name: Check if file exists
+  stat:
+    path: "{{ config_file }}"
+  register: file_stat
+
+- name: Create empty JSON file
+  copy:
+    content: '{ "extras" : [], "news": [], "version": 2 }'
+    dest: "{{ config_file }}"
+  when: not file_stat.stat.exists
+
+- name: Slurp the json
+  slurp:
+    src: "{{ config_file }}"
+  register: slurped
+
+- name: Before
+  debug:
+    var: json_contents
+
+- name: Save contents to a variable
+  set_fact:
+    json_contents: "{{ slurped.content | b64decode | from_json }}"
+
+- name: Merge json with replacement values
+  set_fact:
+    json_contents: "{{ json_contents | combine({'extras': (json_contents.extras + [extra_to_install])}) }}"
+  vars:
+    extra_to_install: "{{ extra_to_install }}"
+
+- name: After
+  debug:
+    var: json_contents
+
+- name: Overwrite the original json file
+  copy:
+    content: "{{ json_contents | to_nice_json(indent=2) }}"
+    dest: "{{ config_file }}"
