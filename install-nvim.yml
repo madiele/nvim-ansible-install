@@ -116,10 +116,19 @@
             path: "~/.config/nvim/.git"
             state: absent
 
-        - name: install overrides
-          copy:
-            src: ./lua/
-            dest: "{{ nvim_config }}/lua"
+        - name: Find all files in the override lua folder
+          find:
+            paths: '{{ "./lua" }}'
+            file_type: file
+            recurse: yes
+          register: source_files
+
+        - name: Clone files with hardlinks
+          file:
+            src: "{{ item.path | realpath }}"
+            dest: '{{ nvim_config }}/{{ item.path }}'
+            state: hard
+          loop: "{{ source_files.files }}"
 
         - name: Sync LazyVim
           command: nvim --headless +"lua require('lazy').sync({wait = true})" +qa
