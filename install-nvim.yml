@@ -1,0 +1,241 @@
+---
+# run to use: ansible-playbook intall-nvim.yml --extra-vars "your.host.url.com"
+- hosts: "{{ host | default('127.0.0.1') }}"
+  connection: local
+  vars_prompt:
+    - name: nvim_tag
+      prompt: (latest|nightly)
+      default: latest
+      private: false
+
+    - name: requested_features
+      prompt: what features do you want to enable, comma separated list?(all|none|yml|rust|copilot|python|docker)
+      default: "all"
+      private: false
+
+  vars:
+    neovim_url: "{% if nvim_tag == 'latest' %}https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz{% else %}https://github.com/neovim/neovim/releases/download/{{ nvim_tag }}/nvim-linux64.tar.gz{% endif %}"
+    neovim_tarball: "{{ ansible_env.HOME }}/nvim-linux64.tar.gz"
+    neovim_extract_path: "{{ ansible_env.HOME }}/nvim-linux64"
+    neovim_bin: "{{ neovim_extract_path }}/bin"
+    nvim_config: "{{ ansible_env.HOME }}/.config/nvim"
+
+  tasks:
+    - name: install npm
+      package:
+        name: npm
+        state: present
+      become: true
+      ignore_errors: true
+
+    - name: install python
+      package:
+        name: python3
+        state: present
+      become: true
+      ignore_errors: true
+
+    - name: Install Neovim on linux64
+      block:
+        - name: backup Neovim install
+          copy:
+            src: "{{ neovim_extract_path }}"
+            dest: "{{ neovim_extract_path }}.bak"
+            remote_src: yes
+          ignore_errors: true
+
+        - name: Download Neovim tarball
+          get_url:
+            url: "{{ neovim_url }}"
+            dest: "{{ neovim_tarball }}"
+            mode: "0644"
+
+        - name: Extract Neovim tarball
+          unarchive:
+            src: "{{ neovim_tarball }}"
+            dest: "{{ ansible_env.HOME }}"
+            remote_src: yes
+
+        - name: Delete Neovim tarball
+          file:
+            path: "{{ neovim_tarball }}"
+            state: absent
+
+        - name: Add Neovim to PATH
+          lineinfile:
+            path: "{{ ansible_env.HOME }}/.bashrc"
+            line: 'export PATH="{{ neovim_bin }}:$PATH"'
+            create: yes
+
+        - debug:
+            msg: you might need to ```source /home/madiele/.bashrc```
+
+      rescue:
+        - name: Delete Neovim install files
+          file:
+            path: "{{ neovim_extract_path }}"
+            state: absent
+
+        - name: Restore Neovim backup
+          command: "mv {{ neovim_extract_path }}.bak {{ neovim_extract_path }}"
+      when: ansible_architecture == "x86_64"
+
+    - name: try to install lazyvim
+      block:
+        - name: parse features
+          set_fact:
+            features: '{{ requested_features.split(",") }}'
+
+        - name: delete the old LazyVim backup
+          file:
+            path: "{{ item }}"
+            state: absent
+          with_items:
+            - "~/.config/nvim.bak"
+            - "~/.local/share/nvim.bak"
+            - "~/.local/state/nvim.bak"
+            #- "~/.cache/nvim.bak"
+          ignore_errors: true
+
+        - name: make a new backup of current Neovim files
+          command: "mv {{ item }} {{ item }}.bak"
+          with_items:
+            - "~/.config/nvim"
+            - "~/.local/share/nvim"
+            - "~/.local/state/nvim"
+            #- "~/.cache/nvim"
+          ignore_errors: true
+
+        - name: clone the LazyVim starter
+          git:
+            repo: "https://github.com/LazyVim/starter"
+            dest: "~/.config/nvim"
+
+        - name: remove the .git folder
+          file:
+            path: "~/.config/nvim/.git"
+            state: absent
+
+        - name: install overrides
+          copy:
+            src: ./lua/
+            dest: "{{ nvim_config }}/lua"
+
+        - name: Sync LazyVim
+          command: nvim --headless +"lua require('lazy').sync({wait = true})" +qa
+          timeout: 300
+          ignore_errors: true
+
+        - name: enable yml lsp
+          include_role:
+            name: add_extra
+          vars:
+            extra_to_install: "lazyvim.plugins.extras.lang.yaml"
+          when: '"all" in features or "yml" in features'
+
+        - name: install yml lsp
+          command: 'nvim --headless +"Lazy! load mason.nvim" +"MasonInstall yaml-language-server" +q'
+          when: '"all" in features or "yml" in features'
+          timeout: 120
+          ignore_errors: true
+
+        - name: enable rust lsp
+          include_role:
+            name: add_extra
+          vars:
+            extra_to_install: "lazyvim.plugins.extras.lang.rust"
+          when: '"all" in features or "rust" in features'
+
+        - name: install rust lsp
+          command: 'nvim --headless +"Lazy! load mason.nvim" +"MasonInstall rust-analyzer" +q'
+          when: '"all" in features or "rust" in features'
+          timeout: 120
+          ignore_errors: true
+
+        - name: enable python lsp
+          include_role:
+            name: add_extra
+          vars:
+            extra_to_install: "lazyvim.plugins.extras.lang.python"
+          when: '"all" in features or "python" in features'
+
+        - name: install python lsp
+          command: 'nvim --headless +"Lazy! load mason.nvim" +"MasonInstall pyright" +q'
+          when: '"all" in features or "python" in features'
+          timeout: 120
+          ignore_errors: true
+
+        - name: enable docker lsp
+          include_role:
+            name: add_extra
+          vars:
+            extra_to_install: "lazyvim.plugins.extras.lang.docker"
+          when: '"all" in features or "docker" in features'
+
+        - name: install docker lsp
+          command: 'nvim --headless +"Lazy! load mason.nvim" +"MasonInstall docker-compose-language-service" +q'
+          when: '"all" in features or "docker" in features'
+          timeout: 120
+          ignore_errors: true
+
+        - name: enable copilot
+          include_role:
+            name: add_extra
+          vars:
+            extra_to_install: "lazyvim.plugins.extras.coding.copilot"
+          when: '"all" in features or "copilot" in features'
+
+        - name: Sync LazyVim
+          command: nvim --headless +"lua require('lazy').sync({wait = true})" +qa
+          timeout: 600
+          ignore_errors: true
+          when: 'not ("none" in features)'
+
+        - name: compile treesitter
+          command: 'nvim --headless +"Lazy! load nvim-treesitter" +"TSInstallSync {{ item }}" +q'
+          timeout: 600
+          ignore_errors: true
+          with_items:
+            - "bash"
+            - "c"
+            - "diff"
+            - "html"
+            - "javascript"
+            - "jsdoc"
+            - "json"
+            - "jsonc"
+            - "lua"
+            - "luadoc"
+            - "luap"
+            - "markdown"
+            - "markdown_inline"
+            - "python"
+            - "query"
+            - "regex"
+            - "toml"
+            - "tsx"
+            - "typescript"
+            - "vim"
+            - "vimdoc"
+            - "yaml"
+            - "rust"
+            - "dockerfile"
+
+      rescue:
+        - name: delete dirty folders
+          file:
+            path: "{{ item }}"
+            state: absent
+          with_items:
+            - "~/.config/nvim"
+            - "~/.local/share/nvim"
+            - "~/.local/state/nvim"
+            #- "~/.cache/nvim.bak"
+
+        - name: restoring backup
+          command: "mv {{ item }}.bak {{ item }}"
+          with_items:
+            - "~/.config/nvim"
+            - "~/.local/share/nvim"
+            - "~/.local/state/nvim"
+            #- "~/.cache/nvim"
