@@ -1,5 +1,5 @@
 ---
-# run to use: ansible-playbook intall-nvim.yml --extra-vars "your.host.url.com"
+# run to use: ansible-playbook install-nvim.yml --extra-vars "your.host.url.com"
 - hosts: "{{ host | default('127.0.0.1') }}"
   connection: local
   vars_prompt:
