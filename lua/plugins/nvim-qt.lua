@@ -1,3 +1,3 @@
 return {
-  "equalsraf/neovim-gui-shim"
+  "equalsraf/neovim-gui-shim",
 }

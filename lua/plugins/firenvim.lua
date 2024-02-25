@@ -22,7 +22,7 @@ return {
         },
       },
     }
-    vim.cmd("set guifont=monospace:h6")
+    vim.cmd("set guifont=monospace:h16")
+    vim.cmd("Copilot disable")
   end,
 }
-
