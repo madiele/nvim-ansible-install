@@ -5,12 +5,12 @@
   vars_prompt:
     - name: nvim_tag
       prompt: (latest|nightly)
-      default: latest
+      default: nightly
       private: false
 
     - name: requested_features
       prompt: what features do you want to enable, comma separated list?(all|none|yml|rust|copilot|python|docker)
-      default: "all"
+      default: "none"
       private: false
 
   vars:
@@ -134,6 +134,7 @@
             src: "{{ item.path | realpath }}"
             dest: "{{ nvim_config }}/{{ item.path }}"
             state: hard
+            force: true
           loop: "{{ source_files.files }}"
           when: inventory_hostname == 'localhost' or inventory_hostname == '127.0.0.1'
 
