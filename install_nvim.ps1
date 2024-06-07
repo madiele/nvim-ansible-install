@@ -102,6 +102,7 @@ foreach($language in $ts_languages){
     & nvim --headless +"Lazy! load nvim-treesitter" +"TSInstallSync! $language" +q
 }
 
-#compile fzf for tree-sitter as a workaroud
-& cd $env:APPDATA\..\Local\nvim-data\lazy\telescope-fzf-native.nvim
+#compile fzf for tree-sitter as a workaround
+Push-Location $env:APPDATA\..\Local\nvim-data\lazy\telescope-fzf-native.nvim
 & $makeExe
+Pop-Location
