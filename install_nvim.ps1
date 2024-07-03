@@ -2,6 +2,9 @@ $isAdmin = [bool]([System.Security.Principal.WindowsIdentity]::GetCurrent().Grou
 if ($isAdmin) {
   & write-host "installing dependecies"
   & choco install unzip wget lazygit fd llvm mingw ripgrep -y
+  & winget settings --enable InstallerHashOverride
+  & winget install --id=Neovim.Neovim.Nightly  -e --ignore-security-hash
+  & winget settings --disable InstallerHashOverride
 } 
 else {
   & write-host "skipping dependecies check, please run as admin to check"
